@@ -1,0 +1,42 @@
+[
+    {
+        "player": "LeBron James",
+        "line": 25.5,
+        "over_odds": -115,
+        "under_odds": -105,
+        "opponent": "GSW",
+        "is_home": true
+    },
+    {
+        "player": "Stephen Curry",
+        "line": 26.5,
+        "over_odds": -110,
+        "under_odds": -110,
+        "opponent": "LAL",
+        "is_home": false
+    },
+    {
+        "player": "Nikola Jokic",
+        "line": 26.5,
+        "over_odds": -105,
+        "under_odds": -115,
+        "opponent": "PHX",
+        "is_home": true
+    },
+    {
+        "player": "Jayson Tatum",
+        "line": 27.5,
+        "over_odds": -110,
+        "under_odds": -110,
+        "opponent": "MIA",
+        "is_home": true
+    },
+    {
+        "player": "Luka Doncic",
+        "line": 32.5,
+        "over_odds": -115,
+        "under_odds": -105,
+        "opponent": "OKC",
+        "is_home": false
+    }
+]

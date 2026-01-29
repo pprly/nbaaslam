@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏀 NBA Value Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid #333;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 1000px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Input Section */
+        .input-section textarea {
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        .input-section textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .input-section .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 15px;
+            margin-right: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid #444;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .btn-live {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+        
+        .btn-live:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        
+        .status-message.error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+        
+        .status-message.success {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        .status-message.loading {
+            background: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        
+        /* Value Bets */
+        .value-bet {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .value-bet.over {
+            border-left-color: #4CAF50;
+        }
+        
+        .value-bet.under {
+            border-left-color: #f44336;
+        }
+        
+        .value-bet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .value-bet-rank {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .value-bet-player {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .value-bet-edge {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .value-bet-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .detail-item {
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+        }
+        
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .bet-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .bet-type.over {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+        
+        .bet-type.under {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        
+        /* Player Cards */
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .player-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .player-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .player-card.selected {
+            border: 2px solid #4CAF50;
+        }
+        
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .player-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .player-team {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .stability-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .stability-badge.low {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+        
+        .stability-badge.medium {
+            background: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+        }
+        
+        .stability-badge.high {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        
+        .player-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .mini-chart {
+            height: 60px;
+            margin-top: 10px;
+        }
+        
+        /* Charts Section */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        
+        /* Summary */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .summary-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .summary-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Trend indicators */
+        .trend-up { color: #4CAF50; }
+        .trend-down { color: #f44336; }
+        .trend-stable { color: #888; }
+        
+        /* Reasons */
+        .reasons {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .reason {
+            font-size: 12px;
+            color: #aaa;
+            padding: 3px 0;
+        }
+        
+        .reason::before {
+            content: "•";
+            margin-right: 8px;
+            color: #4CAF50;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 8px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+        
+        .tab:hover {
+            color: #fff;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏀 NBA Value Analyzer</h1>
+            <p>Вероятностная модель для поиска неэффективностей рынка</p>
+        </header>
+        
+        <!-- Summary -->
+        <div class="summary-grid" id="summary" style="display: none;">
+            <div class="summary-item">
+                <div class="summary-value" id="summary-total">0</div>
+                <div class="summary-label">Линий</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value" id="summary-analyzed">0</div>
+                <div class="summary-label">Проанализировано</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value" id="summary-value-bets">0</div>
+                <div class="summary-label">Value Bets</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value" id="summary-stability">0</div>
+                <div class="summary-label">Avg Stability</div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- Left Panel -->
+            <div class="left-panel">
+                <!-- Input -->
+                <div class="card input-section">
+                    <h2>📝 Ввод линий</h2>
+                    <textarea id="lines-input" placeholder="LeBron James, 25.5, -110, -110
+Stephen Curry, 26.5
+Luka Doncic, 32.5, -115, -105"></textarea>
+                    <div class="hint">Формат: Имя, Линия, Over коэф, Under коэф</div>
+                    <button class="btn btn-primary" onclick="analyze()">🔍 Анализировать</button>
+                    <button class="btn btn-secondary" onclick="loadDemo()">📊 Демо</button>
+                    <button class="btn btn-live" onclick="loadLive()">🔴 Live данные</button>
+                    <div id="status-message"></div>
+                </div>
+                
+                <!-- Value Bets -->
+                <div class="card" style="margin-top: 20px;">
+                    <h2>⚡ Value Bets</h2>
+                    <div id="value-bets-container">
+                        <div class="loading">
+                            <p>Введите линии для анализа</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel -->
+            <div class="right-panel">
+                <div class="card">
+                    <div class="tabs">
+                        <button class="tab active" onclick="showTab('players')">👥 Игроки</button>
+                        <button class="tab" onclick="showTab('charts')">📈 Графики</button>
+                    </div>
+                    
+                    <!-- Players Tab -->
+                    <div class="tab-content active" id="tab-players">
+                        <div id="players-container" class="players-grid">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>Загрузите данные для начала</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Tab -->
+                    <div class="tab-content" id="tab-charts">
+                        <div id="charts-container">
+                            <h3 style="margin-bottom: 20px; color: #fff;" id="chart-title">Выберите игрока</h3>
+                            <div class="chart-container">
+                                <canvas id="points-chart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="minutes-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let playersData = [];
+        let selectedPlayer = null;
+        let pointsChart = null;
+        let minutesChart = null;
+        
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            document.querySelector(`.tab-content#tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Load demo data
+        async function loadDemo() {
+            showLoading();
+            showStatus('Загрузка демо данных...', 'loading');
+            
+            try {
+                const response = await fetch('/api/demo');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateUI(data);
+                    showStatus(data.message, 'success');
+                } else {
+                    showStatus('Ошибка: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Ошибка загрузки: ' + error, 'error');
+            }
+        }
+        
+        // Load LIVE data from Odds API
+        async function loadLive() {
+            showLoading();
+            showStatus('🔴 Загрузка реальных данных... Это может занять 30-60 секунд', 'loading');
+            
+            try {
+                const response = await fetch('/api/live');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateUI(data);
+                    showStatus('✅ ' + data.message, 'success');
+                } else {
+                    showStatus('❌ ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('❌ Ошибка: ' + error, 'error');
+            }
+        }
+        
+        function showStatus(message, type) {
+            const el = document.getElementById('status-message');
+            el.className = 'status-message ' + type;
+            el.textContent = message;
+        }
+        
+        // Analyze custom lines
+        async function analyze() {
+            const input = document.getElementById('lines-input').value.trim();
+            if (!input) {
+                showStatus('Введите линии для анализа', 'error');
+                return;
+            }
+            
+            showLoading();
+            showStatus('Анализ линий...', 'loading');
+            
+            // Parse input
+            const lines = input.split('\n').map(line => {
+                const parts = line.split(',').map(p => p.trim());
+                return {
+                    player: parts[0],
+                    line: parseFloat(parts[1]),
+                    over_odds: parts[2] ? parseFloat(parts[2]) : -110,
+                    under_odds: parts[3] ? parseFloat(parts[3]) : -110
+                };
+            }).filter(l => l.player && l.line);
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lines })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateUI(data);
+                    showStatus('✅ ' + data.message, 'success');
+                } else {
+                    showStatus('❌ ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('❌ Ошибка: ' + error, 'error');
+            }
+        }
+        
+        function showLoading() {
+            document.getElementById('players-container').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Загрузка данных...</p>
+                </div>
+            `;
+            document.getElementById('value-bets-container').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Анализ...</p>
+                </div>
+            `;
+        }
+        
+        function updateUI(data) {
+            playersData = data.players;
+            
+            // Update summary
+            document.getElementById('summary').style.display = 'grid';
+            document.getElementById('summary-total').textContent = data.summary.total_lines;
+            document.getElementById('summary-analyzed').textContent = data.summary.accepted;
+            document.getElementById('summary-value-bets').textContent = data.value_bets.length;
+            document.getElementById('summary-stability').textContent = Math.round(data.summary.avg_stability);
+            
+            // Update value bets
+            renderValueBets(data.value_bets);
+            
+            // Update players
+            renderPlayers(data.players);
+        }
+        
+        function renderValueBets(valueBets) {
+            const container = document.getElementById('value-bets-container');
+            
+            if (valueBets.length === 0) {
+                container.innerHTML = '<p style="color: #888; text-align: center;">Value bets не найдены</p>';
+                return;
+            }
+            
+            container.innerHTML = valueBets.map(vb => `
+                <div class="value-bet ${vb.bet_type.toLowerCase()}">
+                    <div class="value-bet-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="value-bet-rank">${vb.rank}</div>
+                            <div>
+                                <div class="value-bet-player">${vb.player}</div>
+                                <span class="bet-type ${vb.bet_type.toLowerCase()}">${vb.bet_type} ${vb.line}</span>
+                            </div>
+                        </div>
+                        <div class="value-bet-edge">+${vb.edge}%</div>
+                    </div>
+                    <div class="value-bet-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Модель</div>
+                            <div class="detail-value">${vb.model_prob}%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Букмекер</div>
+                            <div class="detail-value">${vb.implied_prob}%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Уверенность</div>
+                            <div class="detail-value">${vb.confidence}%</div>
+                        </div>
+                    </div>
+                    <div class="reasons">
+                        ${vb.reasons.map(r => `<div class="reason">${r}</div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderPlayers(players) {
+            const container = document.getElementById('players-container');
+            
+            container.innerHTML = players.map((p, idx) => `
+                <div class="player-card" onclick="selectPlayer(${idx})">
+                    <div class="player-header">
+                        <div>
+                            <div class="player-name">${p.name}</div>
+                            <div class="player-team">${p.team || 'N/A'} • O/U ${p.line}</div>
+                        </div>
+                        <span class="stability-badge ${p.risk_level}">${p.stability_score}</span>
+                    </div>
+                    <div class="player-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">PPG</div>
+                            <div class="stat-value">${p.season_ppg}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">L5 AVG</div>
+                            <div class="stat-value">${p.avg_last_5}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">STD</div>
+                            <div class="stat-value">${p.std}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">HIT%</div>
+                            <div class="stat-value">${p.hit_rate_10}%</div>
+                        </div>
+                    </div>
+                    <div class="mini-chart">
+                        <canvas id="mini-chart-${idx}"></canvas>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Render mini charts
+            players.forEach((p, idx) => {
+                renderMiniChart(idx, p.games, p.line);
+            });
+        }
+        
+        function renderMiniChart(idx, games, line) {
+            const ctx = document.getElementById(`mini-chart-${idx}`);
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: games.map((_, i) => i + 1),
+                    datasets: [{
+                        data: games,
+                        backgroundColor: games.map(g => g > line ? 'rgba(76, 175, 80, 0.6)' : 'rgba(244, 67, 54, 0.6)'),
+                        borderRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    },
+                    animation: false
+                }
+            });
+        }
+        
+        function selectPlayer(idx) {
+            selectedPlayer = playersData[idx];
+            
+            // Update selection
+            document.querySelectorAll('.player-card').forEach((c, i) => {
+                c.classList.toggle('selected', i === idx);
+            });
+            
+            // Switch to charts tab
+            showTab('charts');
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            document.querySelectorAll('.tab')[0].classList.remove('active');
+            
+            // Update charts
+            updateCharts(selectedPlayer);
+        }
+        
+        function updateCharts(player) {
+            document.getElementById('chart-title').textContent = 
+                `${player.name} - Последние ${player.games_detail ? player.games_detail.length : 10} игр`;
+            
+            // Используем детальные данные если есть
+            const gamesDetail = player.games_detail || [];
+            const labels = gamesDetail.map(g => g.date ? g.date.split(' ')[0] : '');
+            
+            // Destroy existing charts
+            if (pointsChart) pointsChart.destroy();
+            if (minutesChart) minutesChart.destroy();
+            
+            // Points chart с детальными тултипами
+            const pointsCtx = document.getElementById('points-chart');
+            pointsChart = new Chart(pointsCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Очки',
+                        data: player.games,
+                        backgroundColor: player.games.map(g => 
+                            g > player.line ? 'rgba(76, 175, 80, 0.7)' : 'rgba(244, 67, 54, 0.7)'
+                        ),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(20, 20, 40, 0.95)',
+                            titleColor: '#fff',
+                            bodyColor: '#ddd',
+                            borderColor: 'rgba(255,255,255,0.2)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(context) {
+                                    const idx = context[0].dataIndex;
+                                    const game = gamesDetail[idx];
+                                    if (game && game.matchup) {
+                                        return game.matchup;
+                                    }
+                                    return '';
+                                },
+                                label: function(context) {
+                                    const idx = context.dataIndex;
+                                    const game = gamesDetail[idx];
+                                    const pts = context.raw;
+                                    const line = player.line;
+                                    const result = pts > line ? '✅ OVER' : '❌ UNDER';
+                                    
+                                    const lines = [
+                                        `📊 ${pts} очков ${result}`,
+                                        `📏 Линия: ${line}`
+                                    ];
+                                    
+                                    if (game) {
+                                        lines.push(`⏱ ${game.min} минут`);
+                                        lines.push(`🏀 ${game.reb} REB / ${game.ast} AST`);
+                                        if (game.wl) {
+                                            lines.push(`${game.wl === 'W' ? '🏆 Победа' : '💔 Поражение'}`);
+                                        }
+                                    }
+                                    
+                                    return lines;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#888' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { 
+                                color: '#888',
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Draw line annotation manually
+            const lineY = player.line;
+            Chart.register({
+                id: 'lineAnnotation',
+                afterDatasetsDraw(chart) {
+                    const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+                    const yPos = y.getPixelForValue(lineY);
+                    
+                    ctx.save();
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(left, yPos);
+                    ctx.lineTo(right, yPos);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = '12px sans-serif';
+                    ctx.fillText(`Линия: ${lineY}`, right - 80, yPos - 5);
+                    ctx.restore();
+                }
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-load demo on page load (optional)
+            // loadDemo();
+        });
+    </script>
+</body>
+</html>
