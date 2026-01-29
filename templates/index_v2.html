@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Value Analyzer v2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141b3a;
+            --bg-card: #1a2238;
+            --bg-hover: #232d4f;
+            
+            --accent-primary: #ff6b35;
+            --accent-secondary: #f7931e;
+            --accent-success: #00d9a3;
+            --accent-danger: #ff3366;
+            
+            --text-primary: #ffffff;
+            --text-secondary: #9aa5ce;
+            --text-muted: #5b6582;
+            
+            --border: rgba(255, 255, 255, 0.08);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1042 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 107, 53, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(247, 147, 30, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Header */
+        header {
+            background: rgba(26, 34, 56, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px 40px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        
+        .title-group h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+        
+        .title-group p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 2px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Rajdhani', sans-serif;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .btn-icon {
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            transform: rotate(180deg);
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(26, 34, 56, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), transparent);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .card {
+            background: rgba(26, 34, 56, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Filters */
+        .filter-group {
+            margin-bottom: 20px;
+        }
+        
+        .filter-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        .filter-input, .filter-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .filter-select {
+            cursor: pointer;
+        }
+        
+        .filter-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .range-slider {
+            margin-top: 8px;
+        }
+        
+        .range-slider input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .range-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+        }
+        
+        .range-values {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* Toggle Buttons */
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .toggle-btn.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border-color: transparent;
+        }
+        
+        /* Value Bets List */
+        .value-bet-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .value-bet-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(4px);
+        }
+        
+        .value-bet-item.over::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent-success);
+        }
+        
+        .value-bet-item.under::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent-danger);
+        }
+        
+        .vb-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .vb-player {
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        .vb-edge {
+            font-weight: 700;
+            font-size: 18px;
+            font-family: 'Rajdhani', sans-serif;
+            color: var(--accent-primary);
+        }
+        
+        .vb-details {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .vb-detail span {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        /* Games Grid */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        
+        .game-card {
+            background: rgba(26, 34, 56, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+        
+        .game-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .game-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .game-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        
+        .game-live {
+            background: var(--accent-danger);
+            color: white;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .teams {
+            margin-bottom: 16px;
+        }
+        
+        .team {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        
+        .team-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .team-abbr {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .players-preview {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .player-chip {
+            background: rgba(255, 107, 53, 0.15);
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+        
+        /* Players Table */
+        .players-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        
+        .players-table thead th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .players-table tbody tr {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .players-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateX(4px);
+        }
+        
+        .players-table tbody td {
+            padding: 16px 12px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .players-table tbody td:first-child {
+            border-left: 1px solid var(--border);
+            border-radius: 10px 0 0 10px;
+        }
+        
+        .players-table tbody td:last-child {
+            border-right: 1px solid var(--border);
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .player-name-cell {
+            font-weight: 600;
+        }
+        
+        .player-team {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: rgba(0, 217, 163, 0.15);
+            color: var(--accent-success);
+        }
+        
+        .badge-warning {
+            background: rgba(247, 147, 30, 0.15);
+            color: var(--accent-secondary);
+        }
+        
+        .badge-danger {
+            background: rgba(255, 51, 102, 0.15);
+            color: var(--accent-danger);
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px;
+            border-radius: 12px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Rajdhani', sans-serif;
+            letter-spacing: 0.5px;
+        }
+        
+        .tab.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            margin-bottom: 8px;
+        }
+        
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .stats-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">🏀</div>
+                    <div class="title-group">
+                        <h1>NBA VALUE ANALYZER</h1>
+                        <p>Real-time betting intelligence & analytics</p>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="loadLiveData()">
+                        <span>🔴 LIVE</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadDemoData()">
+                        <span>📊 DEMO</span>
+                    </button>
+                    <button class="btn-icon tooltip" data-tooltip="Обновить" onclick="refreshData()">
+                        <span>🔄</span>
+                    </button>
+                    <button class="btn-icon tooltip" data-tooltip="Настройки">
+                        <span>⚙️</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Stats Bar -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <div class="stat-label">Матчей сегодня</div>
+                <div class="stat-value" id="statGames">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Игроков</div>
+                <div class="stat-value" id="statPlayers">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Value Bets</div>
+                <div class="stat-value" id="statValueBets">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Edge</div>
+                <div class="stat-value" id="statAvgEdge">0%</div>
+            </div>
+        </div>
+        
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Filters -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🔍 ФИЛЬТРЫ</h3>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <div class="filter-label">Поиск игрока</div>
+                        <input type="text" class="filter-input" id="playerSearch" placeholder="Введите имя...">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <div class="filter-label">Команда</div>
+                        <select class="filter-select" id="teamFilter">
+                            <option value="">Все команды</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <div class="filter-label">Линия очков</div>
+                        <div class="range-slider">
+                            <input type="range" id="lineMin" min="10" max="40" value="10" step="0.5">
+                            <input type="range" id="lineMax" min="10" max="40" value="40" step="0.5">
+                        </div>
+                        <div class="range-values">
+                            <span id="lineMinVal">10.0</span>
+                            <span id="lineMaxVal">40.0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <div class="filter-label">Стабильность</div>
+                        <div class="toggle-group">
+                            <div class="toggle-btn active" data-stability="all">Все</div>
+                            <div class="toggle-btn" data-stability="high">Высокая</div>
+                            <div class="toggle-btn" data-stability="low">Низкая</div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <div class="filter-label">Сортировка</div>
+                        <select class="filter-select" id="sortBy">
+                            <option value="edge">По Edge</option>
+                            <option value="stability">По стабильности</option>
+                            <option value="line">По линии</option>
+                            <option value="name">По имени</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Top Value Bets -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⚡ TOP VALUE BETS</h3>
+                        <span class="badge badge-success" id="valueBetsCount">0</span>
+                    </div>
+                    
+                    <div id="valueBetsList">
+                        <div class="empty-state">
+                            <p>Загрузите данные для анализа</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="card">
+                    <div class="tabs">
+                        <button class="tab active" data-tab="games">📅 Матчи</button>
+                        <button class="tab" data-tab="players">👥 Игроки</button>
+                        <button class="tab" data-tab="analysis">📊 Анализ</button>
+                    </div>
+                    
+                    <!-- Games Tab -->
+                    <div class="tab-content active" id="tab-games">
+                        <div id="gamesGrid" class="games-grid">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>Загрузка матчей...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Players Tab -->
+                    <div class="tab-content" id="tab-players">
+                        <div id="playersTable">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>Загрузка игроков...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis Tab -->
+                    <div class="tab-content" id="tab-analysis">
+                        <div id="analysisView">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>Анализ данных...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/app.js"></script>
+</body>
+</html>
